@@ -7,3 +7,10 @@
 
 **WARNING**: This example contains deliberately buggy code. Do not copy it
 without reading the article and understanding the problems it demonstrates.
+
+| Blog info | Details           |
+| --------- | ----------------- |
+| Article   | [Dev Corner: compiler help with the error context stack](https://www.2ndquadrant.com/en/?p=58103)
+| Author    | Craig Ringer      |
+| Date      | September 2, 2020 |
+

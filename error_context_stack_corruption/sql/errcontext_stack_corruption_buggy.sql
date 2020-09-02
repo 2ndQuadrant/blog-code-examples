@@ -1,5 +1,4 @@
 \set client_min_messages notice
-\set VERBOSITY verbose
 
 -- This is fine, normal return path
 SELECT errcontext_stack_corruption.my_func(true, 'errcontext_buggy');

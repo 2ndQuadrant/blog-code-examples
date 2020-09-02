@@ -10,9 +10,9 @@
 #include "funcapi.h"
 #include "utils/builtins.h"
 
+#include "errcontext_check.h"
 
 PG_MODULE_MAGIC;
-
 
 /*
  * Dummy code
@@ -125,6 +125,54 @@ my_func_with_errcontext_fixed(bool do_it)
         error_context_stack = myerrcontext.previous;
 }
 
+/*
+ * WARNING WARNING WARNING
+ *
+ * This code is deliberately BUGGY. DO NOT COPY IT.
+ *
+ * This modifies my_func_with_errcontext_BUGGY very minimally to
+ * add the pgl_errcontext_check() attribute on the declaration
+ * of the ErrorContextCallback variable.
+ *
+ * It will fix the problem and ERROR when called, preventing a crash, but only
+ * if the compiler supports __attribute__((cleanup)).
+ */
+static void
+my_func_with_errcontext_ERRDETECT(bool do_it)
+{
+    ErrorContextCallback myerrcontext pgl_errcontext_check();
+    struct my_func_ctx_arg ctxinfo;
+
+    ctxinfo.do_it = do_it;
+    myerrcontext.callback = my_func_ctx_callback;
+    myerrcontext.arg = &ctxinfo;
+    myerrcontext.previous = error_context_stack;
+    error_context_stack = &myerrcontext;
+
+    if (!do_it)
+    {
+        /*
+         * -----------------------
+         * WARNING WARNING WARNING
+         * -----------------------
+         *
+         * This code is deliberately BUGGY. DO NOT COPY IT.
+         */
+        elog(LOG, "leaking error context stack pointer %p", error_context_stack);
+        leaked_errcontext_ptr = error_context_stack;
+        elog(WARNING, "not doing it and leaking the error context callback pointer!");
+        return;
+    }
+
+    do_the_thing();
+
+    /*
+     * Note that this isn't necessarily strictly correct for complex functions
+     * that may involve transaction management, etc:
+     */
+    if (error_context_stack == &myerrcontext)
+        error_context_stack = myerrcontext.previous;
+}
 
 /*
  * Wrappers to make the examples SQL-callable and more reliably trigger the
@@ -134,9 +182,6 @@ my_func_with_errcontext_fixed(bool do_it)
  * you can probably just use -O0 instead.
  */
 
-#ifndef __has_attribute
-  #define __has_attribute(x) 0
-#endif
 #if __has_attribute(noinline)
 #define ext_noinline() __attribute__((noinline))
 #else
@@ -182,6 +227,8 @@ call_with_padded_stack(bool do_it, const char *variant)
         my_func_with_errcontext_BUGGY(do_it);
     else if (strcmp(variant, "errcontext_fixed") == 0)
         my_func_with_errcontext_fixed(do_it);
+    else if (strcmp(variant, "errcontext_detect") == 0)
+        my_func_with_errcontext_ERRDETECT(do_it);
     else
         ereport(ERROR,
                 (errmsg("unrecognised \"variant\" argument: %s", variant)));

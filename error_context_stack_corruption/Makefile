@@ -1,12 +1,21 @@
 PGFILEDESC = "errcontext_stack_corruption - blog example"
-MODULES = errcontext_stack_corruption
+
 EXTENSION = errcontext_stack_corruption
-DATA = errcontext_stack_corruption--1.0.sql
+MODULE_big = errcontext_stack_corruption
+
+OBJS = \
+       errcontext_stack_corruption.o \
+       errcontext_check.o
+
+DATA = errcontext_stack_corruption--1.0.sql \
+       errcontext_stack_corruption--1.0--1.1.sql \
+       errcontext_stack_corruption--1.1.sql
 
 REGRESS = \
 	errcontext_stack_corruption_init \
 	errcontext_stack_corruption_basic \
 	errcontext_stack_corruption_fixed \
+	errcontext_stack_corruption_detect \
 	errcontext_stack_corruption_buggy
 
 # The errors demonstrated in this blog will NOT be caught by stack-guard logic
