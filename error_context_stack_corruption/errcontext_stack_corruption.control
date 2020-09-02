@@ -1,0 +1,5 @@
+comment = 'Error context stack corruption examples'
+default_version = '1.0'
+schema = 'errcontext_stack_corruption'
+module_pathname = '$libdir/errcontext_stack_corruption'
+relocatable = false
