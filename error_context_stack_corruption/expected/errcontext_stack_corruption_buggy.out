@@ -1,0 +1,17 @@
+\set client_min_messages notice
+-- This is fine, normal return path
+SELECT errcontext_stack_corruption.my_func(true, 'errcontext_buggy');
+INFO:  did the thing
+INFO:  after return from requested call
+ my_func 
+---------
+ 
+(1 row)
+
+-- This returns with a bogus errcontext
+SELECT errcontext_stack_corruption.my_func(false, 'errcontext_buggy');
+WARNING:  not doing it and leaking the error context callback pointer!
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost

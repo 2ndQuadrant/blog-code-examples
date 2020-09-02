@@ -1,0 +1,17 @@
+\set client_min_messages notice
+SELECT errcontext_stack_corruption.my_func(true, 'errcontext_fixed');
+INFO:  did the thing
+INFO:  after return from requested call
+ my_func 
+---------
+ 
+(1 row)
+
+SELECT errcontext_stack_corruption.my_func(false, 'errcontext_fixed');
+INFO:  not doing it (correctly)
+INFO:  after return from requested call
+ my_func 
+---------
+ 
+(1 row)
+
