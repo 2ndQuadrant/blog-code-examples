@@ -1,0 +1,62 @@
+# Include this makefile from your example makefiles before you include PGXS.
+PG_CONFIG ?= pg_config
+
+# Consider passing PG_CPPFLAGS=-Werror on the command line too. It's not used
+# here to prevent people having issues building older examples on newer
+# compilers etc.
+
+PG_CPPFLAGS += -Wall -Wextra -Og -ggdb3 --std=gnu99
+
+define pg_config_errmsg
+
+
+ERROR: Could not find pg_config at $(PG_CONFIG))
+
+Check that pg_config is your PATH or explicitly set
+the Make variable PG_CONFIG=/path/to/pg/config e.g:
+
+    make PG_CONFIG=/usr/pgsql-11/bin/pg_config
+
+or
+
+    PATH=/usr/pgsql-11/bin:$$PATH make
+
+
+endef
+
+ifeq ($(shell type $(PG_CONFIG) 2>/dev/null),)
+$(error $(pg_config_errmsg))
+endif
+
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+
+ifeq ($(PGXS),)
+$(error Did not find pgxs.mk using command: $(PG_CONFIG) --pgxs)
+endif
+
+include $(PGXS)
+
+abs_srcdir = $(abspath $(srcdir))
+$(info Building $(notdir $(abs_srcdir)) against PostgreSQL $(VERSION) at $(bindir))
+
+# Support 'make check' with a temp instance. You still have to install the
+# extension itself for this to work, because Pg doesn't support a dynamic
+# extension path like it does the dynamic library path.
+#
+# Remember you can use EXTRA_REGRESS_OPTS to add args to this.
+
+check_installable:
+	@if ! [ -w $(bindir) ]; then echo "ERROR: $(bindir) is not writeable, cannot perform 'install' step before running regression tests"; exit 1; fi
+
+regresscheck: $(regress_postgresql_conf) check_installable install
+	rm -rf regression_output tmp_check
+	$(MKDIR_P) regression_output
+	PATH="$(shell $(PG_CONFIG) --bindir):$${PATH}" \
+	$(pg_regress_check) \
+	    $(if $(regress_postgresql_conf),--temp-config $(regress_postgresql_conf)) \
+	    --temp-instance=./tmp_check \
+	    --outputdir=./regression_output \
+	    --create-role=logical \
+	    $(REGRESS)
+
+install: check_installable
